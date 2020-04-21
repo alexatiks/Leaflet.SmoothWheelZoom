@@ -109,6 +109,8 @@
             this._prevCenter = map.getCenter();
             this._prevZoom = map.getZoom();
 
+            map.fire('viewreset');
+
             this._zoomAnimationId = requestAnimationFrame(this._updateWheelZoom.bind(this));
         }
     });
