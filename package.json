@@ -1,18 +1,18 @@
 {
-  "name": "leaflet.smoothzoom",
-  "version": "0.1.1",
+  "name": "leaflet.smoothwheelzoom",
+  "version": "0.1.2",
   "description": "Smooth wheel zoom plugin for leaflet",
-  "main": "Leaflet.SmoothZoom.js",
+  "main": "Leaflet.SmoothWheelZoom.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexatiks/Leaflet.SmoothZoom.git"
+    "url": "git+https://github.com/alexatiks/Leaflet.SmoothWheelZoom.git"
   },
   "author": "",
   "bugs": {
-    "url": "https://github.com/alexatiks/Leaflet.SmoothZoom/issues"
+    "url": "https://github.com/alexatiks/Leaflet.SmoothWheelZoom/issues"
   },
-  "homepage": "https://github.com/alexatiks/Leaflet.SmoothZoom#readme"
+  "homepage": "https://github.com/alexatiks/Leaflet.SmoothWheelZoom#readme"
 }
