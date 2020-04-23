@@ -74,6 +74,9 @@
 
             clearTimeout(this._timeoutId);
             this._timeoutId = setTimeout(this._onWheelEnd.bind(this), 200);
+
+            L.DomEvent.preventDefault(e);
+            L.DomEvent.stopPropagation(e);
         },
 
         _onWheelEnd: function (e) {
