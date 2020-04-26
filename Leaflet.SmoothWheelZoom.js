@@ -82,6 +82,9 @@
         _onWheelEnd: function (e) {
             this._isWheeling = false;
             cancelAnimationFrame(this._zoomAnimationId);
+
+            // fire zoomend event in order to MarkerCluster plugin rerender clusters
+            this._map.fire('zoomend');
         },
 
         _updateWheelZoom: function () {
