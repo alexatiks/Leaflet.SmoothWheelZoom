@@ -4,9 +4,9 @@ This solution is based on the [repo](https://github.com/mutsuyuki/Leaflet.Smooth
 
 ### Usage
 
-fork the repository
+Installation:
 
-npm i gitAccount/Leaflet.SmoothWheelZoom.git#x.x.x
+`npm i alexatiks/Leaflet.SmoothWheelZoom.git`
 
 ```
 import 'leaflet.smoothwheelzoom';
