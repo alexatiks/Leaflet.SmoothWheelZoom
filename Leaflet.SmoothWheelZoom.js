@@ -1,127 +1,135 @@
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD
-        define(['leaflet'], factory);
-    } else if (typeof module !== 'undefined') {
-        // Node/CommonJS
-        module.exports = factory(require('leaflet'));
-    } else {
-        // Browser globals
-        if (typeof window.L === 'undefined') {
-            throw new Error('Leaflet must be loaded first');
-        }
-        factory(window.L);
+import L from "leaflet";
+
+L.Map.mergeOptions({
+  // @section Mousewheel options
+  // @option smoothWheelZoom: Boolean|String = true
+  // Whether the map can be zoomed by using the mouse wheel. If passed `'center'`,
+  // it will zoom to the center of the view regardless of where the mouse was.
+  smoothWheelZoom: true,
+
+  // @option smoothWheelZoom: number = 1
+  // setting zoom speed
+  smoothSensitivity: 1,
+});
+
+L.Map.SmoothWheelZoom = L.Handler.extend({
+  addHooks: function () {
+    L.DomEvent.on(
+      this._map._container,
+      "mousewheel",
+      this._onWheelScroll,
+      this
+    );
+  },
+
+  removeHooks: function () {
+    L.DomEvent.off(
+      this._map._container,
+      "mousewheel",
+      this._onWheelScroll,
+      this
+    );
+  },
+
+  _onWheelScroll: function (e) {
+    if (!this._isWheeling) {
+      this._onWheelStart(e);
     }
-}(function (L) {
-    L.Map.mergeOptions({
-        // @section Mousewheel options
-        // @option smoothWheelZoom: Boolean|String = true
-        // Whether the map can be zoomed by using the mouse wheel. If passed `'center'`,
-        // it will zoom to the center of the view regardless of where the mouse was.
-        smoothWheelZoom: true,
+    this._onWheeling(e);
+  },
 
-        // @option smoothWheelZoom: number = 1
-        // setting zoom speed
-        smoothSensitivity: 1
-    });
+  _onWheelStart: function (e) {
+    var map = this._map;
+    this._isWheeling = true;
+    this._wheelMousePosition = map.mouseEventToContainerPoint(e);
+    this._centerPoint = map.getSize()._divideBy(2);
+    this._startLatLng = map.containerPointToLatLng(this._centerPoint);
+    this._wheelStartLatLng = map.containerPointToLatLng(
+      this._wheelMousePosition
+    );
+    this._startZoom = map.getZoom();
+    this._moved = false;
+    this._zooming = true;
 
-    L.Map.SmoothWheelZoom = L.Handler.extend({
+    map._stop();
+    if (map._panAnim) map._panAnim.stop();
 
-        addHooks: function () {
-            L.DomEvent.on(this._map._container, 'mousewheel', this._onWheelScroll, this);
-        },
+    this._goalZoom = map.getZoom();
+    this._prevCenter = map.getCenter();
+    this._prevZoom = map.getZoom();
 
-        removeHooks: function () {
-            L.DomEvent.off(this._map._container, 'mousewheel', this._onWheelScroll, this);
-        },
+    this._zoomAnimationId = requestAnimationFrame(
+      this._updateWheelZoom.bind(this)
+    );
+  },
 
-        _onWheelScroll: function (e) {
-            if (!this._isWheeling) {
-                this._onWheelStart(e);
-            }
-            this._onWheeling(e);
-        },
+  _onWheeling: function (e) {
+    var map = this._map;
 
-        _onWheelStart: function (e) {
-            console.log("yo")
-            
-            var map = this._map;
-            this._isWheeling = true;
-            this._wheelMousePosition = map.mouseEventToContainerPoint(e);
-            this._centerPoint = map.getSize()._divideBy(2);
-            this._startLatLng = map.containerPointToLatLng(this._centerPoint);
-            this._wheelStartLatLng = map.containerPointToLatLng(this._wheelMousePosition);
-            this._startZoom = map.getZoom();
-            this._moved = false;
-            this._zooming = true;
+    this._goalZoom =
+      this._goalZoom - e.deltaY * 0.003 * map.options.smoothSensitivity;
+    if (
+      this._goalZoom < map.getMinZoom() ||
+      this._goalZoom > map.getMaxZoom()
+    ) {
+      this._goalZoom = map._limitZoom(this._goalZoom);
+    }
+    this._wheelMousePosition = this._map.mouseEventToContainerPoint(e);
 
-            map._stop();
-            if (map._panAnim) map._panAnim.stop();
+    clearTimeout(this._timeoutId);
+    this._timeoutId = setTimeout(this._onWheelEnd.bind(this), 200);
 
-            this._goalZoom = map.getZoom();
-            this._prevCenter = map.getCenter();
-            this._prevZoom = map.getZoom();
+    L.DomEvent.preventDefault(e);
+    L.DomEvent.stopPropagation(e);
+  },
 
-            this._zoomAnimationId = requestAnimationFrame(this._updateWheelZoom.bind(this));
-        },
+  _onWheelEnd: function (e) {
+    this._isWheeling = false;
+    cancelAnimationFrame(this._zoomAnimationId);
 
-        _onWheeling: function (e) {
-            var map = this._map;
+    // fire zoomend event in order to MarkerCluster plugin rerender clusters
+    this._map.fire("zoomend");
+  },
 
-            this._goalZoom = this._goalZoom - e.deltaY * 0.003 * map.options.smoothSensitivity;
-            if (this._goalZoom < map.getMinZoom() || this._goalZoom > map.getMaxZoom()) {
-                this._goalZoom = map._limitZoom(this._goalZoom);
-            }
-            this._wheelMousePosition = this._map.mouseEventToContainerPoint(e);
+  _updateWheelZoom: function () {
+    var map = this._map;
 
-            clearTimeout(this._timeoutId);
-            this._timeoutId = setTimeout(this._onWheelEnd.bind(this), 200);
+    if (
+      !map.getCenter().equals(this._prevCenter) ||
+      map.getZoom() != this._prevZoom
+    )
+      return;
 
-            L.DomEvent.preventDefault(e);
-            L.DomEvent.stopPropagation(e);
-        },
+    this._zoom = map.getZoom() + (this._goalZoom - map.getZoom()) * 0.3;
+    this._zoom = Math.floor(this._zoom * 100) / 100;
 
-        _onWheelEnd: function (e) {
-            this._isWheeling = false;
-            cancelAnimationFrame(this._zoomAnimationId);
+    var delta = this._wheelMousePosition.subtract(this._centerPoint);
+    if (delta.x === 0 && delta.y === 0) return;
 
-            // fire zoomend event in order to MarkerCluster plugin rerender clusters
-            this._map.fire('zoomend');
-        },
+    if (map.options.smoothWheelZoom === "center") {
+      this._center = this._startLatLng;
+    } else {
+      this._center = map.unproject(
+        map.project(this._wheelStartLatLng, this._zoom).subtract(delta),
+        this._zoom
+      );
+    }
 
-        _updateWheelZoom: function () {
-            var map = this._map;
+    if (!this._moved) {
+      map._moveStart(true, false);
+      this._moved = true;
+    }
 
-            if ((!map.getCenter().equals(this._prevCenter)) || map.getZoom() != this._prevZoom)
-                return;
+    map._move(this._center, this._zoom);
+    this._prevCenter = map.getCenter();
+    this._prevZoom = map.getZoom();
 
-            this._zoom = map.getZoom() + (this._goalZoom - map.getZoom()) * 0.3;
-            this._zoom = Math.floor(this._zoom * 100) / 100;
+    map.fire("viewreset");
 
-            var delta = this._wheelMousePosition.subtract(this._centerPoint);
-            if (delta.x === 0 && delta.y === 0)
-                return;
+    this._zoomAnimationId = requestAnimationFrame(
+      this._updateWheelZoom.bind(this)
+    );
+  },
+});
 
-            if (map.options.smoothWheelZoom === 'center') {
-                this._center = this._startLatLng;
-            } else {
-                this._center = map.unproject(map.project(this._wheelStartLatLng, this._zoom).subtract(delta), this._zoom);
-            }
-
-            if (!this._moved) {
-                map._moveStart(true, false);
-                this._moved = true;
-            }
-
-            map._move(this._center, this._zoom);
-            this._prevCenter = map.getCenter();
-            this._prevZoom = map.getZoom();
-
-            map.fire('viewreset');
-
-            this._zoomAnimationId = requestAnimationFrame(this._updateWheelZoom.bind(this));
-        }
-    });
-
-    L.Map.addInitHook('addHandler', 'smoothWheelZoom', L.Map.SmoothWheelZoom);
-}));
+L.Map.addInitHook("addHandler", "smoothWheelZoom", L.Map.SmoothWheelZoom);
