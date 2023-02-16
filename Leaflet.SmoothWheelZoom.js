@@ -1,18 +1,6 @@
 import { Map, Handler, DomEvent } from "leaflet";
 
-Map.mergeOptions({
-  // @section Mousewheel options
-  // @option smoothWheelZoom: Boolean|String = true
-  // Whether the map can be zoomed by using the mouse wheel. If passed `'center'`,
-  // it will zoom to the center of the view regardless of where the mouse was.
-  smoothWheelZoom: true,
-
-  // @option smoothWheelZoom: number = 1
-  // setting zoom speed
-  smoothSensitivity: 1,
-});
-
-Map.SmoothWheelZoom = Handler.extend({
+const SmoothWheelZoom = Handler.extend({
   addHooks: function () {
     DomEvent.on(
       this._map._container,
@@ -132,4 +120,12 @@ Map.SmoothWheelZoom = Handler.extend({
   },
 });
 
-Map.addInitHook("addHandler", "smoothWheelZoom", Map.SmoothWheelZoom);
+/**
+ * @param {Map} map
+ * @param {number} smoothSensitivity 
+ */
+export function enableSmoothZoom(map, smoothSensitivity = 1) {
+    map.options.smoothWheelZoom = true;
+    map.options.smoothSensitivity = smoothSensitivity;
+    map.addHandler("smoothWheelZoom", SmoothWheelZoom);
+}
