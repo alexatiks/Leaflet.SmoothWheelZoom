@@ -2,21 +2,11 @@ import { Map, Handler, DomEvent } from "leaflet";
 
 const SmoothWheelZoom = Handler.extend({
   addHooks: function () {
-    DomEvent.on(
-      this._map._container,
-      "mousewheel",
-      this._onWheelScroll,
-      this
-    );
+    DomEvent.on(this._map._container, "mousewheel", this._onWheelScroll, this);
   },
 
   removeHooks: function () {
-    DomEvent.off(
-      this._map._container,
-      "mousewheel",
-      this._onWheelScroll,
-      this
-    );
+    DomEvent.off(this._map._container, "mousewheel", this._onWheelScroll, this);
   },
 
   _onWheelScroll: function (e) {
@@ -32,7 +22,7 @@ const SmoothWheelZoom = Handler.extend({
     this._wheelMousePosition = map.mouseEventToContainerPoint(e);
     this._centerPoint = map.getSize()._divideBy(2);
     this._startLatLng = map.containerPointToLatLng(this._centerPoint);
-    this._wheelStartLatLng = map.containerPointToLatLng(
+    this._wheelMouseLatLng = map.containerPointToLatLng(
       this._wheelMousePosition
     );
     this._startZoom = map.getZoom();
@@ -63,6 +53,9 @@ const SmoothWheelZoom = Handler.extend({
       this._goalZoom = map._limitZoom(this._goalZoom);
     }
     this._wheelMousePosition = this._map.mouseEventToContainerPoint(e);
+    this._wheelMouseLatLng = map.containerPointToLatLng(
+      this._wheelMousePosition
+    );
 
     clearTimeout(this._timeoutId);
     this._timeoutId = setTimeout(this._onWheelEnd.bind(this), 200);
@@ -98,7 +91,7 @@ const SmoothWheelZoom = Handler.extend({
       this._center = this._startLatLng;
     } else {
       this._center = map.unproject(
-        map.project(this._wheelStartLatLng, this._zoom).subtract(delta),
+        map.project(this._wheelMouseLatLng, this._zoom).subtract(delta),
         this._zoom
       );
     }
@@ -122,10 +115,11 @@ const SmoothWheelZoom = Handler.extend({
 
 /**
  * @param {Map} map
- * @param {number} smoothSensitivity 
+ * @param {number} smoothSensitivity
  */
 export function enableSmoothZoom(map, smoothSensitivity = 1) {
-    map.options.smoothWheelZoom = true;
-    map.options.smoothSensitivity = smoothSensitivity;
-    map.addHandler("smoothWheelZoom", SmoothWheelZoom);
+  map.options.scrollWheelZoom = false; // disable original zoom function
+  map.options.smoothWheelZoom = true;
+  map.options.smoothSensitivity = smoothSensitivity;
+  map.addHandler("smoothWheelZoom", SmoothWheelZoom);
 }
