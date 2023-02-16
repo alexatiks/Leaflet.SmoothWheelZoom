@@ -43,6 +43,8 @@
         },
 
         _onWheelStart: function (e) {
+            console.log("yo")
+            
             var map = this._map;
             this._isWheeling = true;
             this._wheelMousePosition = map.mouseEventToContainerPoint(e);
