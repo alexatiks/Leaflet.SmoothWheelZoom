@@ -1,38 +1,22 @@
 # Smooth wheel zoom plugin for leaflet
 
-This solution is based on the [repo](https://github.com/mutsuyuki/Leaflet.SmoothWheelZoom) with some improvements 
+Credits :
+- [mutsuyuki](https://github.com/mutsuyuki/Leaflet.SmoothWheelZoom) for the original code
+- [alexatiks](https://github.com/alexatiks/Leaflet.SmoothWheelZoom) npm packaging
+- [BudgieInWA](https://github.com/BudgieInWA/Leaflet.SmoothWheelZoom) for the map jumping fix
+
+### Installation
+
+```sh
+npm i nyko28/Leaflet.SmoothWheelZoom.git
+```
 
 ### Usage
 
-fork the repository
+```js
+import { Map } from "leaflet";
+import { enableSmoothZoom } 'leaflet.smoothwheelzoom';
 
-npm i gitAccount/Leaflet.SmoothWheelZoom.git#x.x.x
-
-```
-import 'leaflet.smoothwheelzoom';
-
-...
-
-var map = L.map('map', {
-  scrollWheelZoom: false, // disable original zoom function
-  smoothWheelZoom: true,  // enable smooth zoom 
-  smoothSensitivity: 1.5,   // zoom speed. default is 1
-});
-```
-With Vue2Leaflet
-
-```
-import 'leaflet.smoothwheelzoom';
-
-...
-
-<l-map
-    :zoom="zoom"
-    :center="center"
-    :options="{
-        scrollWheelZoom: false,
-        smoothWheelZoom: true,
-        smoothSensitivity: 1.5,
-    }"
-  >
+const map = Map("map");
+enableSmoothZoom(map);
 ```
